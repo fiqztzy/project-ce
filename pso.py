@@ -5,7 +5,6 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 
 # =========================================================
 # 1. STREAMLIT APP TITLE
@@ -116,13 +115,7 @@ if uploaded_file is not None:
         st.write(f"Sum of Green Times: {round(sum(gbest), 2)} sec")
 
         # =========================================================
-        # 7. PLOT CONVERGENCE GRAPH
+        # 7. PLOT CONVERGENCE GRAPH (STREAMLIT)
         # =========================================================
         st.subheader("📈 PSO Convergence Curve")
-        fig, ax = plt.subplots(figsize=(8, 5))
-        ax.plot(convergence_curve, color='blue', linewidth=2)
-        ax.set_title("PSO Convergence Curve")
-        ax.set_xlabel("Iteration")
-        ax.set_ylabel("Best Delay")
-        ax.grid(True)
-        st.pyplot(fig)
+        st.line_chart(convergence_curve)
