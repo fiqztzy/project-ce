@@ -1,7 +1,14 @@
 import os
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+import streamlit as st
+
+# =========================================================
+# STREAMLIT PAGE CONFIG
+# =========================================================
+st.set_page_config(page_title="Traffic Signal Optimization using PSO", layout="centered")
+
+st.title("🚦 Traffic Signal Optimization using PSO")
 
 # =========================================================
 # 1. LOAD DATASET
@@ -9,23 +16,26 @@ import matplotlib.pyplot as plt
 dataset_path = "traffic_dataset.csv"
 
 if not os.path.exists(dataset_path):
-    raise FileNotFoundError(f"Dataset '{dataset_path}' not found!")
+    st.error("Dataset 'traffic_dataset.csv' not found.")
+    st.stop()
 
 df = pd.read_csv(dataset_path)
 
-# Select numeric columns
 numeric_cols = df.select_dtypes(include=['float64', 'int64']).columns
 
 if len(numeric_cols) < 4:
-    raise ValueError("Dataset must contain at least four numeric traffic columns.")
+    st.error("Dataset must contain at least four numeric traffic columns.")
+    st.stop()
 
-# Use first four numeric columns
 selected_cols = numeric_cols[:4]
 traffic_flows = df[selected_cols].mean().to_numpy()
 
-print("Average Traffic Flows (veh/hr):")
-for col, flow in zip(selected_cols, traffic_flows):
-    print(f"{col}: {flow:.2f}")
+st.subheader("Average Traffic Flows (veh/hr)")
+flow_df = pd.DataFrame({
+    "Traffic Approach": [f"Phase {i+1}" for i in range(4)],
+    "Average Flow (veh/hr)": np.round(traffic_flows, 2)
+})
+st.dataframe(flow_df, use_container_width=True)
 
 # =========================================================
 # 2. TRAFFIC DELAY FUNCTION
@@ -46,76 +56,89 @@ def compute_delay(green_times):
     return np.sum(flow_per_sec / capacity)
 
 # =========================================================
-# 3. PARTICLE SWARM OPTIMIZATION (PSO)
+# 3. PSO PARAMETERS (USER CONTROLS)
 # =========================================================
-num_particles = 50
-num_iterations = 100
-dimensions = 4
+st.sidebar.header("PSO Parameters")
 
-w = 0.5
-c1 = 1.8
-c2 = 1.8
+num_particles = st.sidebar.slider("Number of Particles", 20, 100, 50)
+num_iterations = st.sidebar.slider("Number of Iterations", 50, 200, 100)
 
-pos = np.random.uniform(10, 50, (num_particles, dimensions))
-vel = np.random.uniform(-5, 5, (num_particles, dimensions))
+w = st.sidebar.slider("Inertia Weight (w)", 0.1, 1.0, 0.5)
+c1 = st.sidebar.slider("Cognitive Coefficient (c1)", 0.5, 3.0, 1.8)
+c2 = st.sidebar.slider("Social Coefficient (c2)", 0.5, 3.0, 1.8)
 
-pbest = pos.copy()
-pbest_vals = np.array([compute_delay(p) for p in pos])
-
-gbest_idx = np.argmin(pbest_vals)
-gbest = pbest[gbest_idx].copy()
-gbest_val = pbest_vals[gbest_idx]
-
-convergence_curve = []
-
-print("\nRunning PSO Optimization...\n")
-
-for it in range(num_iterations):
-    r1 = np.random.rand(num_particles, dimensions)
-    r2 = np.random.rand(num_particles, dimensions)
-
-    vel = w * vel + c1 * r1 * (pbest - pos) + c2 * r2 * (gbest - pos)
-    pos = np.clip(pos + vel, 5, 60)
-
-    values = np.array([compute_delay(p) for p in pos])
-
-    improved = values < pbest_vals
-    pbest[improved] = pos[improved]
-    pbest_vals[improved] = values[improved]
-
-    min_idx = np.argmin(pbest_vals)
-    if pbest_vals[min_idx] < gbest_val:
-        gbest_val = pbest_vals[min_idx]
-        gbest = pbest[min_idx].copy()
-
-    convergence_curve.append(gbest_val)
-
-    if (it + 1) % 10 == 0 or it == 0:
-        print(f"Iteration {it+1:03}: Best Delay = {gbest_val:.6f}")
+run_button = st.sidebar.button("▶ Run Optimization")
 
 # =========================================================
-# 4. DISPLAY OPTIMIZED SIGNAL PLAN (REPORT SAFE)
+# 4. PARTICLE SWARM OPTIMIZATION
 # =========================================================
-results_df = pd.DataFrame({
-    "Signal Phase": [f"Phase {i+1}" for i in range(dimensions)],
-    "Green Time (sec)": np.round(gbest, 2)
-})
+if run_button:
 
-print("\n=====================================")
-print("     BEST TRAFFIC LIGHT TIMING")
-print("=====================================")
-print(results_df.to_string(index=False))
-print(f"\nTotal Delay Score: {round(gbest_val, 6)}")
-print(f"Sum of Green Times: {round(np.sum(gbest), 2)} sec")
-print("=====================================\n")
+    dimensions = 4
 
-# =========================================================
-# 5. CONVERGENCE GRAPH
-# =========================================================
-plt.figure()
-plt.plot(convergence_curve)
-plt.xlabel("Iteration")
-plt.ylabel("Best Delay")
-plt.title("PSO Convergence Curve")
-plt.grid(True)
-plt.show()
+    pos = np.random.uniform(10, 50, (num_particles, dimensions))
+    vel = np.random.uniform(-5, 5, (num_particles, dimensions))
+
+    pbest = pos.copy()
+    pbest_vals = np.array([compute_delay(p) for p in pos])
+
+    gbest_idx = np.argmin(pbest_vals)
+    gbest = pbest[gbest_idx].copy()
+    gbest_val = pbest_vals[gbest_idx]
+
+    convergence_curve = []
+
+    progress_bar = st.progress(0)
+
+    for it in range(num_iterations):
+        r1 = np.random.rand(num_particles, dimensions)
+        r2 = np.random.rand(num_particles, dimensions)
+
+        vel = w * vel + c1 * r1 * (pbest - pos) + c2 * r2 * (gbest - pos)
+        pos = np.clip(pos + vel, 5, 60)
+
+        values = np.array([compute_delay(p) for p in pos])
+
+        improved = values < pbest_vals
+        pbest[improved] = pos[improved]
+        pbest_vals[improved] = values[improved]
+
+        min_idx = np.argmin(pbest_vals)
+        if pbest_vals[min_idx] < gbest_val:
+            gbest_val = pbest_vals[min_idx]
+            gbest = pbest[min_idx].copy()
+
+        convergence_curve.append(gbest_val)
+        progress_bar.progress((it + 1) / num_iterations)
+
+    st.success("Optimization Completed Successfully!")
+
+    # =========================================================
+    # 5. RESULTS DISPLAY
+    # =========================================================
+    st.subheader("Optimized Traffic Signal Timing")
+
+    results_df = pd.DataFrame({
+        "Signal Phase": [f"Phase {i+1}" for i in range(4)],
+        "Optimized Green Time (sec)": np.round(gbest, 2)
+    })
+
+    st.dataframe(results_df, use_container_width=True)
+
+    st.markdown(f"""
+    **Total Delay Score:** `{round(gbest_val, 6)}`  
+    **Sum of Green Times:** `{round(np.sum(gbest), 2)} sec`
+    """)
+
+    # =========================================================
+    # 6. CONVERGENCE CURVE (STREAMLIT NATIVE)
+    # =========================================================
+    st.subheader("PSO Convergence Curve")
+
+    convergence_df = pd.DataFrame({
+        "Iteration": range(1, len(convergence_curve) + 1),
+        "Best Delay": convergence_curve
+    })
+
+    st.line_chart(convergence_df.set_index("Iteration"))
+
