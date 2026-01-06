@@ -5,6 +5,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import time
 
 # =========================================================
 # 1. STREAMLIT APP TITLE
@@ -79,6 +80,8 @@ if uploaded_file is not None:
 
         convergence_curve = []
 
+        start_time = time.time()  # Start timer for execution
+
         for it in range(num_iterations):
             r1, r2 = np.random.rand(num_particles, dimensions), np.random.rand(num_particles, dimensions)
 
@@ -101,18 +104,20 @@ if uploaded_file is not None:
             if (it + 1) % 10 == 0 or it == 0:
                 st.write(f"Iteration {it+1:03}: Best Delay = {gbest_val:.6f}")
 
-        # =========================================================
-        # 6. DISPLAY BEST TRAFFIC LIGHT TIMING
-        # =========================================================
-        st.subheader("✅ Best Traffic Light Timing")
-        best_timing_df = pd.DataFrame({
-            'Direction': ['North', 'South', 'East', 'West'],
-            'Green Time (sec)': [round(g, 2) for g in gbest]
-        })
-        st.table(best_timing_df)
+        exec_time = time.time() - start_time  # End timer
 
-        st.write(f"Total Delay Score: {round(gbest_val, 6)}")
-        st.write(f"Sum of Green Times: {round(sum(gbest), 2)} sec")
+        # =========================================================
+        # 6. DISPLAY BEST TRAFFIC LIGHT TIMING (USER-FRIENDLY)
+        # =========================================================
+        st.subheader("✅ Best Traffic Light Timing Found")
+
+        directions = ['North', 'South', 'East', 'West']
+        for i, (dir_name, green_time) in enumerate(zip(directions, gbest), 1):
+            st.write(f"🚦 Phase {i} ({dir_name}) Green Time: {round(green_time)} seconds")
+
+        st.write(f"⏱ Execution Time: {exec_time:.4f} seconds")
+        st.write(f"📝 Total Delay Score: {round(gbest_val, 6)}")
+        st.write(f"🕒 Sum of Green Times: {round(sum(gbest), 2)} sec")
 
         # =========================================================
         # 7. PLOT CONVERGENCE GRAPH (STREAMLIT)
