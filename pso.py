@@ -1,31 +1,38 @@
-import os
+# =========================================================
+# FULL TRAFFIC LIGHT OPTIMIZATION WITH PSO (Google Colab)
+# =========================================================
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from google.colab import files
 
 # =========================================================
-# 1. LOAD DATASET
+# 1. UPLOAD DATASET
 # =========================================================
+print("Upload your 'traffic_dataset.csv' file:")
+uploaded = files.upload()  # Will prompt file upload
+
 dataset_path = "traffic_dataset.csv"
 
-if not os.path.exists(dataset_path):
-    raise FileNotFoundError(f"❌ Dataset '{dataset_path}' not found!")
-
 df = pd.read_csv(dataset_path)
+print("\nDataset loaded successfully!")
 
-# Use first 4 numeric columns as traffic flows
+# =========================================================
+# 2. ANALYZE TRAFFIC DATA
+# =========================================================
 numeric_cols = df.select_dtypes(include=['float64', 'int64']).columns
 if len(numeric_cols) < 4:
     raise ValueError("Dataset must contain at least 4 numeric traffic columns.")
 
 traffic_flows = df[numeric_cols[:4]].mean().to_numpy()
 
-print("Average Traffic Flows (veh/hr):")
+print("\nAverage Traffic Flows (veh/hr):")
 for dir_name, flow in zip(['North', 'South', 'East', 'West'], traffic_flows):
     print(f"{dir_name}: {flow:.2f}")
 
 # =========================================================
-# 2. TRAFFIC DELAY FUNCTION
+# 3. TRAFFIC DELAY FUNCTION
 # =========================================================
 CYCLE_TIME = 120  # seconds
 SAT_FLOW = 1800   # veh/hr
@@ -45,7 +52,7 @@ def compute_delay(green_times):
     return np.sum(delays)
 
 # =========================================================
-# 3. PARTICLE SWARM OPTIMIZATION (PSO)
+# 4. PARTICLE SWARM OPTIMIZATION (PSO)
 # =========================================================
 num_particles = 50
 num_iterations = 100
@@ -99,7 +106,7 @@ for it in range(num_iterations):
         print(f"Iteration {it+1:03}: Best Delay = {gbest_val:.6f}")
 
 # =========================================================
-# 4. DISPLAY BEST TRAFFIC LIGHT TIMING
+# 5. DISPLAY BEST TRAFFIC LIGHT TIMING
 # =========================================================
 traffic_directions = ['North', 'South', 'East', 'West']
 
@@ -117,7 +124,7 @@ print(f"Sum of Green Times: {round(sum(gbest), 2)} sec")
 print("=====================================\n")
 
 # =========================================================
-# 5. PLOT CONVERGENCE GRAPH
+# 6. PLOT CONVERGENCE GRAPH
 # =========================================================
 plt.figure(figsize=(8,5))
 plt.plot(convergence_curve, color='blue', linewidth=2)
