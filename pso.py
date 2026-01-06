@@ -1,126 +1,121 @@
-# =========================================================
-# STREAMLIT TRAFFIC SIGNAL OPTIMIZATION USING PSO
-# =========================================================
-
-import streamlit as st
-import pandas as pd
+import os
 import numpy as np
-import time
+import pandas as pd
+import matplotlib.pyplot as plt
 
 # =========================================================
-# 1. STREAMLIT APP TITLE
+# 1. LOAD DATASET
 # =========================================================
-st.title("🚦 Traffic Signal Optimization using PSO")
-st.write("""
-This app uses Particle Swarm Optimization (PSO) to find the best green times for a four-way intersection
-based on traffic data from North, South, East, and West directions.
-""")
+dataset_path = "traffic_dataset.csv"
+
+if not os.path.exists(dataset_path):
+    raise FileNotFoundError(f"Dataset '{dataset_path}' not found!")
+
+df = pd.read_csv(dataset_path)
+
+# Select numeric columns
+numeric_cols = df.select_dtypes(include=['float64', 'int64']).columns
+
+if len(numeric_cols) < 4:
+    raise ValueError("Dataset must contain at least four numeric traffic columns.")
+
+# Use first four numeric columns
+selected_cols = numeric_cols[:4]
+traffic_flows = df[selected_cols].mean().to_numpy()
+
+print("Average Traffic Flows (veh/hr):")
+for col, flow in zip(selected_cols, traffic_flows):
+    print(f"{col}: {flow:.2f}")
 
 # =========================================================
-# 2. UPLOAD CSV
+# 2. TRAFFIC DELAY FUNCTION
 # =========================================================
-uploaded_file = st.file_uploader("Upload traffic_dataset.csv", type="csv")
+CYCLE_TIME = 120  # seconds
+SAT_FLOW = 1800   # veh/hr
 
-if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file)
-    st.subheader("Dataset Preview")
-    st.dataframe(df.head())
+def compute_delay(green_times):
+    if np.sum(green_times) >= CYCLE_TIME:
+        return 1e9
 
-    # =========================================================
-    # 3. ANALYZE TRAFFIC DATA
-    # =========================================================
-    numeric_cols = df.select_dtypes(include=['float64', 'int64']).columns
-    if len(numeric_cols) < 4:
-        st.error("Dataset must contain at least 4 numeric traffic columns.")
-    else:
-        traffic_flows = df[numeric_cols[:4]].mean().to_numpy()
+    flow_per_sec = traffic_flows / 3600
+    capacity = (green_times / CYCLE_TIME) * SAT_FLOW / 3600
 
-        st.subheader("Average Traffic Flows (veh/hr)")
-        flow_df = pd.DataFrame({
-            'Direction': ['North', 'South', 'East', 'West'],
-            'Average Flow (veh/hr)': traffic_flows.round(2)
-        })
-        st.table(flow_df)
+    if np.any(capacity <= 0):
+        return 1e9
 
-        # =========================================================
-        # 4. TRAFFIC DELAY FUNCTION
-        # =========================================================
-        CYCLE_TIME = 120  # seconds
-        SAT_FLOW = 1800   # veh/hr
+    return np.sum(flow_per_sec / capacity)
 
-        def compute_delay(green_times):
-            if np.sum(green_times) >= CYCLE_TIME:
-                return 1e9
-            flow_per_sec = traffic_flows / 3600
-            capacity = (green_times / CYCLE_TIME) * SAT_FLOW / 3600
-            if np.any(capacity <= 0):
-                return 1e9
-            delays = flow_per_sec / capacity
-            return np.sum(delays)
+# =========================================================
+# 3. PARTICLE SWARM OPTIMIZATION (PSO)
+# =========================================================
+num_particles = 50
+num_iterations = 100
+dimensions = 4
 
-        # =========================================================
-        # 5. PARTICLE SWARM OPTIMIZATION (PSO)
-        # =========================================================
-        st.subheader("🚀 Running PSO Optimization...")
-        num_particles = 50
-        num_iterations = 100
-        dimensions = 4  # N, S, E, W
+w = 0.5
+c1 = 1.8
+c2 = 1.8
 
-        w, c1, c2 = 0.5, 1.8, 1.8
+pos = np.random.uniform(10, 50, (num_particles, dimensions))
+vel = np.random.uniform(-5, 5, (num_particles, dimensions))
 
-        pos = np.random.uniform(10, 50, (num_particles, dimensions))
-        vel = np.random.uniform(-5, 5, (num_particles, dimensions))
+pbest = pos.copy()
+pbest_vals = np.array([compute_delay(p) for p in pos])
 
-        pbest = pos.copy()
-        pbest_vals = np.array([compute_delay(p) for p in pos])
+gbest_idx = np.argmin(pbest_vals)
+gbest = pbest[gbest_idx].copy()
+gbest_val = pbest_vals[gbest_idx]
 
-        gbest_idx = np.argmin(pbest_vals)
-        gbest = pbest[gbest_idx].copy()
-        gbest_val = pbest_vals[gbest_idx]
+convergence_curve = []
 
-        convergence_curve = []
+print("\nRunning PSO Optimization...\n")
 
-        start_time = time.time()  # Start timer for execution
+for it in range(num_iterations):
+    r1 = np.random.rand(num_particles, dimensions)
+    r2 = np.random.rand(num_particles, dimensions)
 
-        for it in range(num_iterations):
-            r1, r2 = np.random.rand(num_particles, dimensions), np.random.rand(num_particles, dimensions)
+    vel = w * vel + c1 * r1 * (pbest - pos) + c2 * r2 * (gbest - pos)
+    pos = np.clip(pos + vel, 5, 60)
 
-            vel = w * vel + c1 * r1 * (pbest - pos) + c2 * r2 * (gbest - pos)
-            pos = np.clip(pos + vel, 5, 60)
+    values = np.array([compute_delay(p) for p in pos])
 
-            values = np.array([compute_delay(p) for p in pos])
+    improved = values < pbest_vals
+    pbest[improved] = pos[improved]
+    pbest_vals[improved] = values[improved]
 
-            improved = values < pbest_vals
-            pbest[improved] = pos[improved]
-            pbest_vals[improved] = values[improved]
+    min_idx = np.argmin(pbest_vals)
+    if pbest_vals[min_idx] < gbest_val:
+        gbest_val = pbest_vals[min_idx]
+        gbest = pbest[min_idx].copy()
 
-            min_idx = np.argmin(pbest_vals)
-            if pbest_vals[min_idx] < gbest_val:
-                gbest_val = pbest_vals[min_idx]
-                gbest = pbest[min_idx].copy()
+    convergence_curve.append(gbest_val)
 
-            convergence_curve.append(gbest_val)
+    if (it + 1) % 10 == 0 or it == 0:
+        print(f"Iteration {it+1:03}: Best Delay = {gbest_val:.6f}")
 
-            if (it + 1) % 10 == 0 or it == 0:
-                st.write(f"Iteration {it+1:03}: Best Delay = {gbest_val:.6f}")
+# =========================================================
+# 4. DISPLAY OPTIMIZED SIGNAL PLAN (REPORT SAFE)
+# =========================================================
+results_df = pd.DataFrame({
+    "Signal Phase": [f"Phase {i+1}" for i in range(dimensions)],
+    "Green Time (sec)": np.round(gbest, 2)
+})
 
-        exec_time = time.time() - start_time  # End timer
+print("\n=====================================")
+print("     BEST TRAFFIC LIGHT TIMING")
+print("=====================================")
+print(results_df.to_string(index=False))
+print(f"\nTotal Delay Score: {round(gbest_val, 6)}")
+print(f"Sum of Green Times: {round(np.sum(gbest), 2)} sec")
+print("=====================================\n")
 
-        # =========================================================
-        # 6. DISPLAY BEST TRAFFIC LIGHT TIMING (USER-FRIENDLY)
-        # =========================================================
-        st.subheader("✅ Best Traffic Light Timing Found")
-
-        directions = ['North', 'South', 'East', 'West']
-        for i, (dir_name, green_time) in enumerate(zip(directions, gbest), 1):
-            st.write(f"🚦 Phase {i} ({dir_name}) Green Time: {round(green_time)} seconds")
-
-        st.write(f"⏱ Execution Time: {exec_time:.4f} seconds")
-        st.write(f"📝 Total Delay Score: {round(gbest_val, 6)}")
-        st.write(f"🕒 Sum of Green Times: {round(sum(gbest), 2)} sec")
-
-        # =========================================================
-        # 7. PLOT CONVERGENCE GRAPH (STREAMLIT)
-        # =========================================================
-        st.subheader("📈 PSO Convergence Curve")
-        st.line_chart(convergence_curve)
+# =========================================================
+# 5. CONVERGENCE GRAPH
+# =========================================================
+plt.figure()
+plt.plot(convergence_curve)
+plt.xlabel("Iteration")
+plt.ylabel("Best Delay")
+plt.title("PSO Convergence Curve")
+plt.grid(True)
+plt.show()
