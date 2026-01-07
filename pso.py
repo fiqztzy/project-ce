@@ -145,65 +145,32 @@ if uploaded_file is not None:
             st.line_chart(convergence)
 
 # =========================================================
-# 8. PERFORMANCE ANALYSIS (TEXT SECTION)
+# PERFORMANCE ANALYSIS (SIMPLE VIEW)
 # =========================================================
 st.divider()
 st.header("Performance Analysis")
 
-st.subheader("Convergence Rate")
-st.write(
-    "The PSO algorithm shows rapid convergence during the early iterations, "
-    "as particles quickly move toward promising regions of the search space."
-)
+st.subheader("Key Metrics Evaluated:")
+st.markdown("""
+- **Convergence Rate:** Speed at which the PSO algorithm stabilizes  
+- **Optimization Quality:** Ability to reduce traffic delay  
+- **Computational Efficiency:** Execution time of the optimization process
+""")
 
-st.subheader("Optimization Quality")
-st.write(
-    "The optimized traffic signal timings significantly reduce total intersection delay, "
-    "demonstrating effective balancing of traffic flows across all directions."
-)
-
-st.subheader("Computational Efficiency")
-st.write(
-    "Due to its simple update mechanism and limited number of parameters, "
-    "the PSO model achieves low execution time and is suitable for real-time applications."
-)
-
-st.subheader("Stability and Robustness")
-st.write(
-    "The convergence curve exhibits smooth behavior with minimal oscillations, "
-    "indicating stable and reliable optimization performance."
-)
-
-# =========================================================
-# EXTENDED ANALYSIS
-# =========================================================
-st.header("Extended Analysis")
-
-st.subheader("Objective Function")
-st.write(
-    "The PSO approach focuses on minimizing total traffic delay as a single-objective "
-    "optimization problem."
-)
-
-st.subheader("Effect of Parameter Settings")
-st.write(
-    "The inertia weight controls exploration and exploitation, while velocity limits "
-    "ensure stable particle movement during optimization."
-)
-
-st.subheader("Practical Applicability")
-st.write(
-    "The Streamlit-based interface allows users to interactively adjust parameters "
-    "and visualize convergence behavior, enhancing real-world usability."
-)
+st.subheader("Observations:")
+st.markdown("""
+- Rapid improvement during early iterations  
+- Stable convergence after sufficient iterations  
+- Cooperative particle behavior improves solution quality
+""")
 
 # =========================================================
 # CONCLUSION
 # =========================================================
 st.header("Conclusion")
-st.write(
-    "This Streamlit-based PSO system demonstrates the effectiveness of swarm intelligence "
-    "for traffic signal optimization. The approach achieves low computational cost, stable "
-    "convergence, and meaningful delay reduction, making it suitable for intelligent traffic "
-    "management systems."
-)
+st.markdown("""
+This Streamlit-based system demonstrates how **Particle Swarm Optimization (PSO)** 
+can be effectively applied to traffic signal optimization problems. The interactive 
+dashboard allows users to adjust parameters, observe convergence behavior, and obtain 
+optimized traffic signal timings with low computational cost.
+""")
