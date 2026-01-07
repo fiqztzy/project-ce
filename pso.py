@@ -1,5 +1,5 @@
 # =========================================================
-# SIMPLE STREAMLIT TRAFFIC SIGNAL OPTIMIZATION USING PSO 
+# SIMPLE STREAMLIT TRAFFIC SIGNAL OPTIMIZATION USING PSO
 # =========================================================
 
 import streamlit as st
@@ -25,7 +25,7 @@ num_iterations = st.sidebar.slider("Iterations", 20, 200, 50)
 inertia_weight = st.sidebar.slider("Inertia Weight", 0.1, 1.0, 0.7)
 velocity_limit = st.sidebar.slider("Velocity Limit", 1, 20, 10)
 
-# Fixed (hidden) coefficients for simplicity
+# Fixed coefficients (hidden for simplicity)
 c1, c2 = 2.0, 2.0
 
 # =========================================================
@@ -76,67 +76,70 @@ if uploaded_file is not None:
         return np.sum(flow_per_sec / capacity)
 
     # =========================================================
-    # 6. RUN PSO
+    # 6. RUN PSO (BUTTON)
     # =========================================================
-    st.subheader("Running PSO Optimization...")
+    if st.button("Run PSO Optimization", type="primary"):
 
-    dimensions = 4
-    pos = np.random.uniform(10, 50, (num_particles, dimensions))
-    vel = np.random.uniform(-velocity_limit, velocity_limit, (num_particles, dimensions))
+        st.subheader("Running PSO Optimization...")
 
-    pbest = pos.copy()
-    pbest_vals = np.array([compute_delay(p) for p in pos])
+        dimensions = 4
+        pos = np.random.uniform(10, 50, (num_particles, dimensions))
+        vel = np.random.uniform(-velocity_limit, velocity_limit, (num_particles, dimensions))
 
-    gbest_idx = np.argmin(pbest_vals)
-    gbest = pbest[gbest_idx].copy()
-    gbest_val = pbest_vals[gbest_idx]
+        pbest = pos.copy()
+        pbest_vals = np.array([compute_delay(p) for p in pos])
 
-    convergence = []
-    start_time = time.time()
+        gbest_idx = np.argmin(pbest_vals)
+        gbest = pbest[gbest_idx].copy()
+        gbest_val = pbest_vals[gbest_idx]
 
-    for _ in range(num_iterations):
-        r1 = np.random.rand(num_particles, dimensions)
-        r2 = np.random.rand(num_particles, dimensions)
+        convergence = []
+        start_time = time.time()
 
-        vel = (
-            inertia_weight * vel
-            + c1 * r1 * (pbest - pos)
-            + c2 * r2 * (gbest - pos)
-        )
+        with st.spinner("Optimizing traffic signal timings..."):
+            for _ in range(num_iterations):
+                r1 = np.random.rand(num_particles, dimensions)
+                r2 = np.random.rand(num_particles, dimensions)
 
-        vel = np.clip(vel, -velocity_limit, velocity_limit)
-        pos = np.clip(pos + vel, 5, 60)
+                vel = (
+                    inertia_weight * vel
+                    + c1 * r1 * (pbest - pos)
+                    + c2 * r2 * (gbest - pos)
+                )
 
-        values = np.array([compute_delay(p) for p in pos])
+                vel = np.clip(vel, -velocity_limit, velocity_limit)
+                pos = np.clip(pos + vel, 5, 60)
 
-        improved = values < pbest_vals
-        pbest[improved] = pos[improved]
-        pbest_vals[improved] = values[improved]
+                values = np.array([compute_delay(p) for p in pos])
 
-        min_idx = np.argmin(pbest_vals)
-        if pbest_vals[min_idx] < gbest_val:
-            gbest_val = pbest_vals[min_idx]
-            gbest = pbest[min_idx].copy()
+                improved = values < pbest_vals
+                pbest[improved] = pos[improved]
+                pbest_vals[improved] = values[improved]
 
-        convergence.append(gbest_val)
+                min_idx = np.argmin(pbest_vals)
+                if pbest_vals[min_idx] < gbest_val:
+                    gbest_val = pbest_vals[min_idx]
+                    gbest = pbest[min_idx].copy()
 
-    exec_time = time.time() - start_time
+                convergence.append(gbest_val)
 
-    # =========================================================
-    # 7. RESULTS (CLEAN LIKE GA)
-    # =========================================================
-    st.subheader("Optimization Results")
+        exec_time = time.time() - start_time
 
-    col1, col2 = st.columns(2)
+        # =========================================================
+        # 7. RESULTS
+        # =========================================================
+        st.subheader("Optimization Results")
 
-    with col1:
-        st.success("Best Traffic Light Timing Found")
-        for i, g in enumerate(gbest, 1):
-            st.write(f"🚦 Phase {i}: **{round(g)} sec**")
+        col1, col2 = st.columns(2)
 
-        st.write(f"Execution Time: **{exec_time:.3f} sec**")
-        st.write(f"Total Delay: **{round(gbest_val, 6)}**")
+        with col1:
+            st.success("Best Traffic Light Timing Found")
+            for i, g in enumerate(gbest, 1):
+                st.write(f"🚦 Phase {i}: **{round(g)} sec**")
 
-    with col2:
-        st.subheader("PSO Convergence")
-        st.line_chart(convergence)
+            st.write(f"Execution Time: **{exec_time:.3f} sec**")
+            st.write(f"Total Delay: **{round(gbest_val, 6)}**")
+
+        with col2:
+            st.subheader("PSO Convergence")
+            st.line_chart(convergence)
