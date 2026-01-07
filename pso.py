@@ -6,6 +6,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import time
+import altair as alt
 
 # =========================================================
 # 1. APP CONFIG
@@ -62,7 +63,7 @@ if uploaded_file is not None:
     st.write(f"🚗 Average Vehicle Count: **{avg_count:.2f} vehicles**")
 
     # =========================================================
-    # 6. OBJECTIVE FUNCTION (CORRECT & MEANINGFUL)
+    # 6. OBJECTIVE FUNCTION
     # =========================================================
     def compute_delay(green_times):
         """
@@ -73,7 +74,6 @@ if uploaded_file is not None:
         """
 
         green_times = np.clip(green_times, 5, 60)
-
         proportions = green_times / np.sum(green_times)
 
         # Congestion-based objective
@@ -153,7 +153,19 @@ if uploaded_file is not None:
 
         with col2:
             st.subheader("📉 PSO Convergence Curve")
-            st.line_chart(convergence)
+
+            # ALTair Chart with Axis Labels
+            df_convergence = pd.DataFrame({
+                "Iteration": range(len(convergence)),
+                "Fitness": convergence
+            })
+
+            chart = alt.Chart(df_convergence).mark_line().encode(
+                x=alt.X("Iteration", title="Iteration"),
+                y=alt.Y("Fitness", title="Fitness Value (Lower is Better)")
+            ).interactive()
+
+            st.altair_chart(chart, use_container_width=True)
 
         # =========================================================
         # 9. CONCLUSION
