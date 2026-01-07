@@ -63,27 +63,29 @@ if uploaded_file is not None:
     st.write(f"🚗 Average Vehicle Count: **{avg_count:.2f} vehicles**")
 
     # =========================================================
-    # 6. OBJECTIVE FUNCTION
+    # 6. OBJECTIVE FUNCTION (BETUL-BETUL BERGANTUNG PADA GREEN TIME)
     # =========================================================
     def compute_delay(green_times):
         """
-        Objective:
-        - Reduce waiting time
+        Fitness Function:
+        - Minimize total waiting time weighted by vehicle_count
         - Allocate more green time to higher demand
-        - Avoid equal phase allocation
+        - Penalize equal green times
         """
-
-        green_times = np.clip(green_times, 5, 60)
+        green_times = np.clip(green_times, 5, 60)  # ensure green time bounds
+        # Proportion of green time
         proportions = green_times / np.sum(green_times)
 
-        # Congestion-based objective
-        waiting_term = avg_wait * np.sum(proportions)
-        demand_term = avg_count * np.var(proportions)
+        # Assign vehicle_count per phase (assume df is 4 phases repeated)
+        phase_counts = df["vehicle_count"].values.reshape(-1, 4)  # rows = time slots
+        # Calculate delay: higher vehicle_count with less green time = higher penalty
+        delays = np.sum(phase_counts / proportions, axis=1)
+        avg_delay = np.mean(delays)
 
-        # Penalize equal allocation (force differentiation)
+        # Penalize equal green times
         balance_penalty = 0.1 / (np.var(green_times) + 1e-6)
 
-        return waiting_term + demand_term + balance_penalty
+        return avg_delay + balance_penalty
 
     # =========================================================
     # 7. RUN PSO
