@@ -145,7 +145,7 @@ if uploaded_file is not None:
         with col1:
             st.success("✅ Best Traffic Light Timing Found")
             for i, g in enumerate(gbest):
-                st.write(f"🚦 Phase {i+1} ({phases[i]}): **{g:.2f} sec**")
+                st.write(f"🚦 Phase {i+1} ({phases[i]}): **{g:.2f} sec**") 
 
             st.write(f"⏱ Execution Time: **{exec_time:.3f} sec**")
             st.write(f"📉 Best Fitness Value: **{gbest_val:.6f}**")
