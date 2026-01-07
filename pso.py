@@ -16,7 +16,7 @@ st.title("🚦 Traffic Signal Optimization using PSO")
 st.write("Simple and clean PSO parameter tuning for traffic signal optimization.")
 
 # =========================================================
-# 2. SIDEBAR – SIMPLE PSO PARAMETERS (LIKE GA)
+# 2. SIDEBAR – SIMPLE PSO PARAMETERS
 # =========================================================
 st.sidebar.header("PSO Parameters")
 
@@ -25,7 +25,7 @@ num_iterations = st.sidebar.slider("Iterations", 20, 200, 50)
 inertia_weight = st.sidebar.slider("Inertia Weight", 0.1, 1.0, 0.7)
 velocity_limit = st.sidebar.slider("Velocity Limit", 1, 20, 10)
 
-# Fixed coefficients (hidden for simplicity)
+# Fixed coefficients
 c1, c2 = 2.0, 2.0
 
 # =========================================================
@@ -40,7 +40,7 @@ if uploaded_file is not None:
     st.dataframe(df.head())
 
     # =========================================================
-    # 4. TRAFFIC FLOWS
+    # 4. TRAFFIC FLOWS (INTERNAL ONLY)
     # =========================================================
     numeric_cols = df.select_dtypes(include=["int64", "float64"]).columns
 
@@ -49,13 +49,6 @@ if uploaded_file is not None:
         st.stop()
 
     traffic_flows = df[numeric_cols[:4]].mean().to_numpy()
-    directions = ["North", "South", "East", "West"]
-
-    st.subheader("Average Traffic Flow (veh/hr)")
-    st.table(pd.DataFrame({
-        "Direction": directions,
-        "Flow": traffic_flows.round(2)
-    }))
 
     # =========================================================
     # 5. TRAFFIC DELAY FUNCTION
@@ -145,7 +138,7 @@ if uploaded_file is not None:
             st.line_chart(convergence)
 
 # =========================================================
-# PERFORMANCE ANALYSIS (SIMPLE VIEW)
+# PERFORMANCE ANALYSIS
 # =========================================================
 st.divider()
 st.header("Performance Analysis")
