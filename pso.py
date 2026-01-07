@@ -1,5 +1,5 @@
 # =========================================================
-# STREAMLIT TRAFFIC SIGNAL OPTIMIZATION USING PSO
+# STREAMLIT TRAFFIC SIGNAL OPTIMIZATION USING PSO (USING WAITING TIME & AVG SPEED)
 # =========================================================
 
 import streamlit as st
@@ -11,19 +11,18 @@ import time
 # 1. APP TITLE
 # =========================================================
 st.set_page_config(page_title="Traffic Signal Optimization (PSO)", layout="wide")
+
 st.title("🚦 Traffic Signal Optimization using PSO")
-st.write("Optimize traffic signal green times to minimize waiting time using PSO.")
+st.write("PSO optimization using **waiting time** and **average speed** as objectives.")
 
 # =========================================================
-# 2. SIDEBAR – PSO PARAMETERS
+# 2. SIDEBAR – SIMPLE PSO PARAMETERS
 # =========================================================
 st.sidebar.header("PSO Parameters")
 num_particles = st.sidebar.slider("Number of Particles", 10, 100, 30)
 num_iterations = st.sidebar.slider("Iterations", 20, 200, 50)
 inertia_weight = st.sidebar.slider("Inertia Weight", 0.1, 1.0, 0.7)
 velocity_limit = st.sidebar.slider("Velocity Limit", 1, 20, 10)
-
-# PSO coefficients
 c1, c2 = 2.0, 2.0
 
 # =========================================================
@@ -38,39 +37,40 @@ if uploaded_file is not None:
     st.dataframe(df.head())
 
     # =========================================================
-    # 4. CHECK NECESSARY COLUMNS
+    # 4. CHECK REQUIRED COLUMNS
     # =========================================================
     required_cols = ["waiting_time", "average_speed"]
     for col in required_cols:
         if col not in df.columns:
-            st.error(f"❌ Dataset must contain column '{col}'")
+            st.error(f"Dataset must contain column: {col}")
             st.stop()
 
-    # =========================================================
-    # 5. PSO OBJECTIVE FUNCTION
-    # =========================================================
-    # For simplicity, assume each particle = green times for 4 directions
-    directions = ["North", "South", "East", "West"]
-    
-    def compute_delay(green_times):
-        """
-        Objective: minimize waiting_time
-        This example just returns mean waiting_time
-        """
-        # In a real model, we could simulate how green_times affect waiting_time
-        # Here we use existing waiting_time column as proxy
-        return np.mean(df["waiting_time"])
+    waiting_times = df["waiting_time"].to_numpy()
+    avg_speeds = df["average_speed"].to_numpy()
 
     # =========================================================
-    # 6. RUN PSO ON BUTTON CLICK
+    # 5. DELAY FUNCTION (OBJECTIVE)
+    # =========================================================
+    # Minimize waiting time and maximize average speed
+    def compute_delay(green_times):
+        # For simplicity, simulate weighted sum of waiting time and inverse speed
+        # Each green_time affects a quarter of traffic (4 "phases")
+        # Green_times: [phase1, phase2, phase3, phase4]
+        weights = np.array([0.25, 0.25, 0.25, 0.25])
+        # compute weighted waiting time
+        wt_score = np.sum(weights * waiting_times[:4])
+        # compute weighted inverse speed (higher speed => lower delay)
+        speed_score = np.sum(weights * (1 / (avg_speeds[:4] + 1e-6)))
+        return wt_score + speed_score  # lower is better
+
+    # =========================================================
+    # 6. RUN PSO
     # =========================================================
     if st.button("Run PSO Optimization", type="primary"):
+        st.subheader("Running PSO Optimization...")
 
-        st.subheader("🚀 Running PSO Optimization...")
-        dimensions = 4  # N, S, E, W
-
-        # Initialize particles
-        pos = np.random.uniform(10, 50, (num_particles, dimensions))
+        dimensions = 4  # 4 phases
+        pos = np.random.uniform(5, 60, (num_particles, dimensions))
         vel = np.random.uniform(-velocity_limit, velocity_limit, (num_particles, dimensions))
 
         pbest = pos.copy()
@@ -88,12 +88,7 @@ if uploaded_file is not None:
                 r1 = np.random.rand(num_particles, dimensions)
                 r2 = np.random.rand(num_particles, dimensions)
 
-                vel = (
-                    inertia_weight * vel
-                    + c1 * r1 * (pbest - pos)
-                    + c2 * r2 * (gbest - pos)
-                )
-
+                vel = inertia_weight * vel + c1 * r1 * (pbest - pos) + c2 * r2 * (gbest - pos)
                 vel = np.clip(vel, -velocity_limit, velocity_limit)
                 pos = np.clip(pos + vel, 5, 60)
 
@@ -113,44 +108,18 @@ if uploaded_file is not None:
         exec_time = time.time() - start_time
 
         # =========================================================
-        # 7. DISPLAY RESULTS
+        # 7. RESULTS
         # =========================================================
-        st.subheader("📈 Optimization Results")
+        st.subheader("Optimization Results")
         col1, col2 = st.columns(2)
 
         with col1:
-            st.success("✅ Best Traffic Light Timing Found")
+            st.success("Best Traffic Light Timing Found")
             for i, g in enumerate(gbest, 1):
-                st.write(f"🚦 Phase {i} ({directions[i-1]}): **{round(g, 2)} sec**")
-
-            st.write(f"⏱ Execution Time: **{exec_time:.3f} sec**")
-            st.write(f"📉 Best Delay: **{round(gbest_val, 6)} sec**")
+                st.write(f"🚦 Phase {i}: **{round(g, 2)} sec**")
+            st.write(f"Execution Time: **{exec_time:.3f} sec**")
+            st.write(f"Best Objective (Delay) Value: **{round(gbest_val, 6)}**")
 
         with col2:
-            st.subheader("📉 PSO Convergence Curve")
+            st.subheader("PSO Convergence")
             st.line_chart(convergence)
-
-        # =========================================================
-        # 8. PERFORMANCE ANALYSIS
-        # =========================================================
-        st.divider()
-        st.header("Performance Analysis")
-        st.subheader("Key Metrics Evaluated:")
-        st.markdown("""
-        - **Convergence Rate:** How quickly PSO finds optimal green times  
-        - **Optimization Quality:** Best waiting_time (delay) achieved  
-        - **Computational Efficiency:** Execution time of optimization
-        """)
-        st.subheader("Observations:")
-        st.markdown("""
-        - Rapid improvement during early iterations  
-        - Stable convergence after sufficient iterations  
-        - Particle cooperation helps reach better solution
-        """)
-
-        st.header("Conclusion")
-        st.markdown("""
-        This Streamlit-based system demonstrates how **Particle Swarm Optimization (PSO)** 
-        can minimize waiting time by optimizing traffic signal green times.  
-        Users can tune parameters, run the optimization, and observe convergence and best delay.
-        """)
