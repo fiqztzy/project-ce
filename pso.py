@@ -35,7 +35,7 @@ c1, c2 = 2.0, 2.0
 # =========================================================
 # 3. UPLOAD DATASET
 # =========================================================
-uploaded_file = st.file_uploader("📂 Upload traffic_dataset.csv", type="csv")
+uploaded_file = st.file_uploader("📂 Upload traffic_dataset(2).csv", type="csv")
 
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
