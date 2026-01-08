@@ -162,10 +162,10 @@ if uploaded_file is not None:
                 "Fitness": convergence
             })
 
-            chart = alt.Chart(df_convergence).mark_line().encode(
-                x=alt.X("Iteration", title="Iteration"),
-                y=alt.Y("Fitness", title="Fitness Value (Lower is Better)")
-            ).interactive()
+        chart = alt.Chart(df_convergence).mark_line().encode(
+    x=alt.X("Iteration", title="Generation"),
+    y=alt.Y("Fitness", title="Fitness Value (Lower is Better)")
+).interactive()
 
             st.altair_chart(chart, use_container_width=True)
 
