@@ -6,7 +6,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import time
-import altair as alt 
+import altair as alt
 
 # =========================================================
 # 1. APP CONFIG
@@ -26,7 +26,7 @@ intersection performance**.
 st.sidebar.header("⚙️ PSO Parameters")
 
 num_particles = st.sidebar.slider("Number of Particles", 10, 100, 30)
-num_iterations = st.sidebar.slider("Iterations", 20, 300, 100)
+num_iterations = st.sidebar.slider("Number of Generations", 20, 300, 100)
 w = st.sidebar.slider("Inertia Weight (w)", 0.3, 1.0, 0.7)
 vmax = st.sidebar.slider("Velocity Limit", 1, 20, 10)
 
@@ -53,7 +53,7 @@ if uploaded_file is not None:
         st.stop()
 
     # =========================================================
-    # 5. AGGREGATED TRAFFIC DATA
+    # 5. TRAFFIC STATISTICS
     # =========================================================
     avg_wait = df["waiting_time"].mean()
     avg_count = df["vehicle_count"].mean()
@@ -63,26 +63,25 @@ if uploaded_file is not None:
     st.write(f"🚗 Average Vehicle Count: **{avg_count:.2f} vehicles**")
 
     # =========================================================
-    # 6. OBJECTIVE FUNCTION (BETUL-BETUL BERGANTUNG PADA GREEN TIME)
+    # 6. FITNESS FUNCTION
     # =========================================================
     def compute_delay(green_times):
         """
         Fitness Function:
-        - Minimize total waiting time weighted by vehicle_count
-        - Allocate more green time to higher demand
-        - Penalize equal green times
+        - Minimize delay based on vehicle demand
+        - Allocate more green time to high traffic phases
+        - Penalize equal green time allocation
         """
-        green_times = np.clip(green_times, 5, 60)  # ensure green time bounds
-        # Proportion of green time
+        green_times = np.clip(green_times, 5, 60)
+
         proportions = green_times / np.sum(green_times)
 
-        # Assign vehicle_count per phase (assume df is 4 phases repeated)
-        phase_counts = df["vehicle_count"].values.reshape(-1, 4)  # rows = time slots
-        # Calculate delay: higher vehicle_count with less green time = higher penalty
+        # Assume dataset arranged in 4 phases per cycle
+        phase_counts = df["vehicle_count"].values.reshape(-1, 4)
+
         delays = np.sum(phase_counts / proportions, axis=1)
         avg_delay = np.mean(delays)
 
-        # Penalize equal green times
         balance_penalty = 0.1 / (np.var(green_times) + 1e-6)
 
         return avg_delay + balance_penalty
@@ -109,7 +108,8 @@ if uploaded_file is not None:
         convergence = []
 
         with st.spinner("Optimizing traffic signal timings..."):
-            for _ in range(num_iterations):
+            for gen in range(num_iterations):
+
                 r1, r2 = np.random.rand(), np.random.rand()
 
                 vel = (
@@ -147,7 +147,7 @@ if uploaded_file is not None:
         with col1:
             st.success("✅ Best Traffic Light Timing Found")
             for i, g in enumerate(gbest):
-                st.write(f"🚦 Phase {i+1} ({phases[i]}): **{g:.2f} sec**") 
+                st.write(f"🚦 Phase {i+1} ({phases[i]}): **{g:.2f} sec**")
 
             st.write(f"⏱ Execution Time: **{exec_time:.3f} sec**")
             st.write(f"📉 Best Fitness Value: **{gbest_val:.6f}**")
@@ -156,16 +156,15 @@ if uploaded_file is not None:
         with col2:
             st.subheader("📉 PSO Convergence Curve")
 
-            # ALTair Chart with Axis Labels
             df_convergence = pd.DataFrame({
-                "Iteration": range(len(convergence)),
+                "Generation": range(1, len(convergence) + 1),
                 "Fitness": convergence
             })
 
-        chart = alt.Chart(df_convergence).mark_line().encode(
-    x=alt.X("Iteration", title="Generation"),
-    y=alt.Y("Fitness", title="Fitness Value (Lower is Better)")
-).interactive()
+            chart = alt.Chart(df_convergence).mark_line().encode(
+                x=alt.X("Generation", title="Generation"),
+                y=alt.Y("Fitness", title="Fitness Value (Lower is Better)")
+            ).interactive()
 
             st.altair_chart(chart, use_container_width=True)
 
@@ -175,8 +174,8 @@ if uploaded_file is not None:
         st.divider()
         st.header("📌 Conclusion")
         st.markdown("""
-        The PSO algorithm successfully optimized traffic signal green time allocation
-        by minimizing congestion-related metrics. Unequal green time distribution
-        reflects varying traffic demand across intersection phases, leading to
-        improved overall intersection performance.
+        The Particle Swarm Optimization (PSO) algorithm successfully optimized
+        traffic signal green time allocation by minimizing congestion-related
+        metrics. The convergence curve shows a decreasing fitness value across
+        generations, indicating effective learning and optimization.
         """)
