@@ -32,15 +32,15 @@ vmax = st.sidebar.slider("Velocity Limit", 1, 20, 10)
 c1, c2 = 2.0, 2.0
 
 # =========================================================
-# 3. LOAD DATASET FROM GITHUB
+# 3. LOAD DATASET (LOCAL FILE)
 # =========================================================
-DATA_URL = "https://raw.githubusercontent.com/username/traffic-pso/main/traffic_dataset.csv"
+DATA_FILE = "traffic_dataset.csv"
 
 try:
-    df = pd.read_csv(DATA_URL)
+    df = pd.read_csv(DATA_FILE)
     st.success("✅ Dataset loaded successfully")
-except:
-    st.error("❌ Failed to load dataset")
+except FileNotFoundError:
+    st.error("❌ traffic_dataset.csv not found in the project folder")
     st.stop()
 
 st.subheader("📊 Dataset Preview")
@@ -49,8 +49,9 @@ st.dataframe(df.head())
 # =========================================================
 # 4. DATA VALIDATION
 # =========================================================
-if not {"waiting_time", "vehicle_count"}.issubset(df.columns):
-    st.error("Dataset must contain: waiting_time, vehicle_count")
+required_cols = {"waiting_time", "vehicle_count"}
+if not required_cols.issubset(df.columns):
+    st.error("Dataset must contain columns: waiting_time, vehicle_count")
     st.stop()
 
 # =========================================================
@@ -64,26 +65,25 @@ st.write(f"⏳ Average Waiting Time: **{avg_wait:.2f} sec**")
 st.write(f"🚗 Average Vehicle Count: **{avg_vehicle:.2f} vehicles**")
 
 # =========================================================
-# 6. FITNESS FUNCTION (ONLY waiting_time & vehicle_count)
+# 6. FITNESS FUNCTION
 # =========================================================
 def compute_fitness(green_times):
     """
     Fitness Function:
-    - Minimize weighted waiting time
-    - Allocate green time efficiently
-    - Penalize equal green times
+    - Minimize congestion using waiting_time & vehicle_count
+    - Encourage unequal green time allocation
     """
 
     green_times = np.clip(green_times, 5, 60)
     total_green = np.sum(green_times)
 
-    # Demand factor from dataset
+    # Traffic demand factor
     demand = avg_wait * avg_vehicle
 
-    # Efficiency: more green time reduces delay
+    # Delay estimation
     delay = demand / total_green
 
-    # Penalize equal distribution
+    # Penalize equal green times
     balance_penalty = 0.1 / (np.var(green_times) + 1e-6)
 
     return delay + balance_penalty
@@ -94,7 +94,7 @@ def compute_fitness(green_times):
 if st.button("🚀 Run PSO Optimization", type="primary"):
 
     start_time = time.time()
-    dimensions = 4  # 4 traffic phases
+    dimensions = 4  # Four signal phases
 
     pos = np.random.uniform(10, 50, (num_particles, dimensions))
     vel = np.random.uniform(-vmax, vmax, (num_particles, dimensions))
@@ -161,8 +161,8 @@ if st.button("🚀 Run PSO Optimization", type="primary"):
         })
 
         chart = alt.Chart(df_conv).mark_line().encode(
-            x="Generation",
-            y="Fitness"
+            x=alt.X("Generation", title="Generation"),
+            y=alt.Y("Fitness", title="Fitness Value (Lower is Better)")
         ).interactive()
 
         st.altair_chart(chart, use_container_width=True)
@@ -174,6 +174,6 @@ st.divider()
 st.markdown("""
 **Conclusion:**  
 PSO successfully optimized traffic signal green times using only waiting time
-and vehicle count data. The decreasing fitness trend indicates effective
-convergence toward an optimal signal timing strategy.
+and vehicle count data. The convergence curve shows decreasing fitness values,
+indicating effective optimization.
 """)
