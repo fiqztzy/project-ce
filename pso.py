@@ -26,7 +26,7 @@ traffic light green times for a **four-way intersection**.
 # =========================================================
 # 2. LOAD DATASET (AUTO FROM SAME FOLDER)
 # =========================================================
-DATASET_PATH = "traffic_dataset.csv"
+DATASET_PATH = "traffic_dataset (2).csv"
 
 if not os.path.exists(DATASET_PATH):
     st.error("❌ traffic_dataset.csv not found in the project folder.")
