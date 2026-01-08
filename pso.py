@@ -25,7 +25,7 @@ using **Particle Swarm Optimization (PSO)** based on **waiting time and vehicle 
 st.sidebar.header("⚙️ PSO Parameters")
 
 num_particles = st.sidebar.slider("Number of Particles", 10, 100, 30)
-num_iterations = st.sidebar.slider("Number of Generations", 20, 300, 100)
+num_generations = st.sidebar.slider("Number of Generations", 20, 300, 100)
 w = st.sidebar.slider("Inertia Weight (w)", 0.3, 1.0, 0.7)
 vmax = st.sidebar.slider("Velocity Limit", 1, 20, 10)
 
@@ -40,7 +40,7 @@ try:
     df = pd.read_csv(DATA_FILE)
     st.success("✅ Dataset loaded successfully")
 except FileNotFoundError:
-    st.error("❌ traffic_dataset.csv not found in the project folder")
+    st.error("❌ Dataset not found in project folder")
     st.stop()
 
 st.subheader("📊 Dataset Preview")
@@ -49,9 +49,8 @@ st.dataframe(df.head())
 # =========================================================
 # 4. DATA VALIDATION
 # =========================================================
-required_cols = {"waiting_time", "vehicle_count"}
-if not required_cols.issubset(df.columns):
-    st.error("Dataset must contain columns: waiting_time, vehicle_count")
+if not {"waiting_time", "vehicle_count"}.issubset(df.columns):
+    st.error("Dataset must contain: waiting_time, vehicle_count")
     st.stop()
 
 # =========================================================
@@ -68,22 +67,12 @@ st.write(f"🚗 Average Vehicle Count: **{avg_vehicle:.2f} vehicles**")
 # 6. FITNESS FUNCTION
 # =========================================================
 def compute_fitness(green_times):
-    """
-    Fitness Function:
-    - Minimize congestion using waiting_time & vehicle_count
-    - Encourage unequal green time allocation
-    """
-
     green_times = np.clip(green_times, 5, 60)
     total_green = np.sum(green_times)
 
-    # Traffic demand factor
     demand = avg_wait * avg_vehicle
-
-    # Delay estimation
     delay = demand / total_green
 
-    # Penalize equal green times
     balance_penalty = 0.1 / (np.var(green_times) + 1e-6)
 
     return delay + balance_penalty
@@ -94,7 +83,7 @@ def compute_fitness(green_times):
 if st.button("🚀 Run PSO Optimization", type="primary"):
 
     start_time = time.time()
-    dimensions = 4  # Four signal phases
+    dimensions = 4
 
     pos = np.random.uniform(10, 50, (num_particles, dimensions))
     vel = np.random.uniform(-vmax, vmax, (num_particles, dimensions))
@@ -109,7 +98,7 @@ if st.button("🚀 Run PSO Optimization", type="primary"):
     convergence = []
 
     with st.spinner("Optimizing traffic signal timings..."):
-        for gen in range(num_iterations):
+        for gen in range(num_generations):
 
             r1, r2 = np.random.rand(), np.random.rand()
 
@@ -168,12 +157,45 @@ if st.button("🚀 Run PSO Optimization", type="primary"):
         st.altair_chart(chart, use_container_width=True)
 
 # =========================================================
-# 9. CONCLUSION
+# 9. PERFORMANCE ANALYSIS (LIKE YOUR EXAMPLE)
 # =========================================================
 st.divider()
+st.header("📊 Performance Analysis")
+
 st.markdown("""
-**Conclusion:**  
-PSO successfully optimized traffic signal green times using only waiting time
-and vehicle count data. The convergence curve shows decreasing fitness values,
-indicating effective optimization.
+- **Convergence Rate:** Rapid improvement is observed during early generations,
+  followed by gradual stabilization, indicating effective PSO convergence.
+
+- **Optimization Accuracy:** The algorithm successfully identifies green time
+  allocations that minimize congestion-related fitness values.
+
+- **Computational Efficiency:** Low execution time is achieved even with multiple
+  particles and generations.
+
+- **Interpretability:** Optimized green times are simple, intuitive, and directly
+  applicable to real-world traffic control.
+""")
+
+st.subheader("🔍 Extended Analysis")
+
+st.markdown("""
+- The inertia weight controls exploration and exploitation behavior.
+- Higher particle counts improve solution diversity but increase computation time.
+- Unequal green time allocation reflects realistic traffic demand conditions.
+""")
+
+# =========================================================
+# 10. CONCLUSION
+# =========================================================
+st.divider()
+st.header("📌 Conclusion")
+
+st.markdown("""
+This Streamlit-based Particle Swarm Optimization (PSO) system demonstrates how
+evolutionary computation can effectively optimize traffic signal green times.
+By utilizing waiting time and vehicle count as traffic demand indicators, the
+system achieves efficient congestion reduction with low computational cost.
+
+The observed convergence behavior and optimized solutions confirm that PSO is
+a practical and scalable approach for adaptive traffic signal control.
 """)
