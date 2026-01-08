@@ -35,7 +35,7 @@ c1, c2 = 2.0, 2.0
 # =========================================================
 # 3. LOAD DATASET FROM GITHUB
 # =========================================================
-DATA_URL = "https://raw.githubusercontent.com/username/traffic-pso/main/traffic_dataset(2).csv"
+DATA_URL = "traffic_dataset(2).csv"
 
 try:
     df = pd.read_csv(DATA_URL)
