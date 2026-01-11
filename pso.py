@@ -157,7 +157,7 @@ if st.button(" Run PSO Optimization", type="primary"):
         st.altair_chart(chart, use_container_width=True)
 
 # =========================================================
-# 9. PERFORMANCE ANALYSIS (LIKE YOUR EXAMPLE)
+# 9. PERFORMANCE ANALYSIS 
 # =========================================================
 st.divider()
 st.header(" Performance Analysis")
