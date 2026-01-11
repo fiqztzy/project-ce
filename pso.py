@@ -162,42 +162,15 @@ if st.button(" Run PSO Optimization", type="primary"):
 # 9. PERFORMANCE ANALYSIS 
 # =========================================================
 st.divider()
-st.header(" Performance Analysis")
-
-st.markdown("""
-- **Convergence Rate:** Rapid improvement is observed during early generations,
-  followed by gradual stabilization, indicating effective PSO convergence.
-
-- **Optimization Accuracy:** The algorithm successfully identifies green time
-  allocations that minimize congestion-related fitness values.
-
-- **Computational Efficiency:** Low execution time is achieved even with multiple
-  particles and generations.
-
-- **Interpretability:** Optimized green times are simple, intuitive, and directly
-  applicable to real-world traffic control.
-""")
-
-st.subheader(" Extended Analysis")
-
-st.markdown("""
-- The inertia weight controls exploration and exploitation behavior.
-- Higher particle counts improve solution diversity but increase computation time.
-- Unequal green time allocation reflects realistic traffic demand conditions.
-""")
-
-# =========================================================
-# 10. CONCLUSION
-# =========================================================
-st.divider()
 st.header(" Conclusion")
 
 st.markdown("""
-This Streamlit-based Particle Swarm Optimization (PSO) system demonstrates how
-evolutionary computation can effectively optimize traffic signal green times.
-By utilizing waiting time and vehicle count as traffic demand indicators, the
-system achieves efficient congestion reduction with low computational cost.
+This Streamlit-based Particle Swarm Optimization (PSO) application effectively
+optimizes traffic signal green times to reduce congestion. By considering
+both waiting time and vehicle count, the system identifies efficient
+green time allocations that are intuitive and directly applicable.
 
-The observed convergence behavior and optimized solutions confirm that PSO is
-a practical and scalable approach for adaptive traffic signal control.
+The results demonstrate rapid convergence, computational efficiency, and
+practical applicability, confirming that PSO is a scalable and reliable
+approach for adaptive traffic signal control in real-world intersections.
 """)
