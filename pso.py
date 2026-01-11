@@ -30,7 +30,7 @@ w = st.sidebar.slider("Inertia Weight (w)", 0.3, 1.0, 0.7)
 vmax = st.sidebar.slider("Velocity Limit", 1, 20, 10)
 
 # Hardcoded c1 & c2
-c1, c2 = 2.0, 2.0
+c1, c2 = 1.8, 1.8
 
 # =========================================================
 # 3. LOAD DATASET (LOCAL FILE)
