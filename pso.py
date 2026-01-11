@@ -13,7 +13,7 @@ import altair as alt
 # =========================================================
 st.set_page_config(page_title="Traffic Signal Optimization (PSO)", layout="wide")
 
-st.title("🚦 Traffic Signal Optimization using PSO")
+st.title(" Traffic Signal Optimization using PSO")
 st.write("""
 This application optimizes traffic signal green times for a four-phase intersection
 using **Particle Swarm Optimization (PSO)** based on **waiting time and vehicle count**.
@@ -38,12 +38,12 @@ DATA_FILE = "traffic_dataset (2).csv"
 
 try:
     df = pd.read_csv(DATA_FILE)
-    st.success("✅ Dataset loaded successfully")
+    st.success(" Dataset loaded successfully")
 except FileNotFoundError:
-    st.error("❌ Dataset not found in project folder")
+    st.error(" Dataset not found in project folder")
     st.stop()
 
-st.subheader("📊 Dataset Preview")
+st.subheader(" Dataset Preview")
 st.dataframe(df.head())
 
 # =========================================================
@@ -59,9 +59,9 @@ if not {"waiting_time", "vehicle_count"}.issubset(df.columns):
 avg_wait = df["waiting_time"].mean()
 avg_vehicle = df["vehicle_count"].mean()
 
-st.subheader("📈 Traffic Statistics")
-st.write(f"⏳ Average Waiting Time: **{avg_wait:.2f} sec**")
-st.write(f"🚗 Average Vehicle Count: **{avg_vehicle:.2f} vehicles**")
+st.subheader(" Traffic Statistics")
+st.write(f" Average Waiting Time: **{avg_wait:.2f} sec**")
+st.write(f" Average Vehicle Count: **{avg_vehicle:.2f} vehicles**")
 
 # =========================================================
 # 6. FITNESS FUNCTION
@@ -80,7 +80,7 @@ def compute_fitness(green_times):
 # =========================================================
 # 7. RUN PSO
 # =========================================================
-if st.button("🚀 Run PSO Optimization", type="primary"):
+if st.button(" Run PSO Optimization", type="primary"):
 
     start_time = time.time()
     dimensions = 4
@@ -129,19 +129,19 @@ if st.button("🚀 Run PSO Optimization", type="primary"):
     # =========================================================
     # 8. RESULTS
     # =========================================================
-    st.subheader("📊 Optimization Results")
+    st.subheader(" Optimization Results")
 
     phases = ["North", "South", "East", "West"]
     col1, col2 = st.columns(2)
 
     with col1:
-        st.success("✅ Optimal Green Times")
+        st.success(" Optimal Green Times")
         for i, g in enumerate(gbest):
-            st.write(f"🚦 {phases[i]}: **{g:.2f} sec**")
+            st.write(f" {phases[i]}: **{g:.2f} sec**")
 
-        st.write(f"🕒 Total Green Time: **{np.sum(gbest):.2f} sec**")
-        st.write(f"📉 Best Fitness Value: **{gbest_val:.6f}**")
-        st.write(f"⏱ Execution Time: **{exec_time:.3f} sec**")
+        st.write(f" Total Green Time: **{np.sum(gbest):.2f} sec**")
+        st.write(f" Best Fitness Value: **{gbest_val:.6f}**")
+        st.write(f" Execution Time: **{exec_time:.3f} sec**")
 
     with col2:
         df_conv = pd.DataFrame({
@@ -160,7 +160,7 @@ if st.button("🚀 Run PSO Optimization", type="primary"):
 # 9. PERFORMANCE ANALYSIS (LIKE YOUR EXAMPLE)
 # =========================================================
 st.divider()
-st.header("📊 Performance Analysis")
+st.header(" Performance Analysis")
 
 st.markdown("""
 - **Convergence Rate:** Rapid improvement is observed during early generations,
@@ -176,7 +176,7 @@ st.markdown("""
   applicable to real-world traffic control.
 """)
 
-st.subheader("🔍 Extended Analysis")
+st.subheader(" Extended Analysis")
 
 st.markdown("""
 - The inertia weight controls exploration and exploitation behavior.
@@ -188,7 +188,7 @@ st.markdown("""
 # 10. CONCLUSION
 # =========================================================
 st.divider()
-st.header("📌 Conclusion")
+st.header(" Conclusion")
 
 st.markdown("""
 This Streamlit-based Particle Swarm Optimization (PSO) system demonstrates how
