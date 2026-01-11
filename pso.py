@@ -13,7 +13,7 @@ import altair as alt
 # =========================================================
 st.set_page_config(page_title="Traffic Signal Optimization (PSO)", layout="wide")
 
-st.title("Traffic Signal Optimization using PSO")
+st.title(" Traffic Signal Optimization using PSO")
 st.write("""
 This application optimizes traffic signal green times for a four-phase intersection
 using **Particle Swarm Optimization (PSO)** based on **waiting time and vehicle count**.
@@ -29,9 +29,8 @@ num_generations = st.sidebar.slider("Number of Generations", 20, 300, 100)
 w = st.sidebar.slider("Inertia Weight (w)", 0.3, 1.0, 0.7)
 vmax = st.sidebar.slider("Velocity Limit", 1, 20, 10)
 
-# ✅ Tambah Cognitive & Social Coefficient
-c1 = st.sidebar.slider("Cognitive Coefficient (c1)", 0.5, 3.0, 1.8, 0.1)
-c2 = st.sidebar.slider("Social Coefficient (c2)", 0.5, 3.0, 1.8, 0.1)
+# Hardcoded c1 & c2
+c1, c2 = 2.0, 2.0
 
 # =========================================================
 # 3. LOAD DATASET (LOCAL FILE)
@@ -104,7 +103,7 @@ if st.button(" Run PSO Optimization", type="primary"):
 
             r1, r2 = np.random.rand(), np.random.rand()
 
-            # Velocity update menggunakan slider c1 & c2
+            # Velocity update menggunakan hardcoded c1 & c2
             vel = (
                 w * vel
                 + c1 * r1 * (pbest - pos)
@@ -145,12 +144,6 @@ if st.button(" Run PSO Optimization", type="primary"):
         st.write(f" Total Green Time: **{np.sum(gbest):.2f} sec**")
         st.write(f" Best Fitness Value: **{gbest_val:.6f}**")
         st.write(f" Execution Time: **{exec_time:.3f} sec**")
-        st.write(f"Cognitive Coefficient (c1): **{c1}**")
-        st.write(f"Social Coefficient (c2): **{c2}**")
-        st.write(f"Inertia Weight (w): **{w}**")
-        st.write(f"Number of Particles: **{num_particles}**")
-        st.write(f"Number of Generations: **{num_generations}**")
-        st.write(f"Velocity Limit: **{vmax}**")
 
     with col2:
         df_conv = pd.DataFrame({
