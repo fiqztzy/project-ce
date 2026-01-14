@@ -1,6 +1,5 @@
 # =========================================================
 # STREAMLIT TRAFFIC SIGNAL OPTIMIZATION USING PSO
-# (Random Green Time + Dynamic Fitness)
 # =========================================================
 
 import streamlit as st
@@ -14,7 +13,7 @@ import altair as alt
 # =========================================================
 st.set_page_config(page_title="Traffic Signal Optimization (PSO)", layout="wide")
 
-st.title("🚦 Traffic Signal Optimization using PSO")
+st.title(" Traffic Signal Optimization using PSO")
 st.write("""
 This application optimizes traffic signal green times for a four-phase intersection
 using **Particle Swarm Optimization (PSO)**.
@@ -41,12 +40,12 @@ DATA_FILE = "traffic_dataset (2).csv"
 
 try:
     df = pd.read_csv(DATA_FILE)
-    st.success("✅ Dataset loaded successfully")
+    st.success(" Dataset loaded successfully")
 except:
-    st.error("❌ Dataset not found")
+    st.error(" Dataset not found")
     st.stop()
 
-st.subheader("📊 Dataset Preview")
+st.subheader(" Dataset Preview")
 st.dataframe(df.head())
 
 # =========================================================
@@ -62,7 +61,7 @@ if not {"waiting_time", "vehicle_count"}.issubset(df.columns):
 avg_wait = df["waiting_time"].mean()
 avg_vehicle = df["vehicle_count"].mean()
 
-st.subheader("📈 Traffic Statistics")
+st.subheader(" Traffic Statistics")
 st.write(f"Average Waiting Time: **{avg_wait:.2f} sec**")
 st.write(f"Average Vehicle Count: **{avg_vehicle:.2f} vehicles**")
 
@@ -90,7 +89,7 @@ def compute_fitness(green_times):
 # =========================================================
 # 7. RUN PSO
 # =========================================================
-if st.button("🚀 Run PSO Optimization", type="primary"):
+if st.button(" Run PSO Optimization", type="primary"):
 
     start_time = time.time()
     dimensions = 4  # North, South, East, West
@@ -141,7 +140,7 @@ if st.button("🚀 Run PSO Optimization", type="primary"):
     # =========================================================
     # 8. RESULTS
     # =========================================================
-    st.subheader("✅ Optimization Results")
+    st.subheader(" Optimization Results")
 
     phases = ["North", "South", "East", "West"]
     col1, col2 = st.columns(2)
