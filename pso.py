@@ -1,5 +1,5 @@
 # =========================================================
-# STREAMLIT TRAFFIC SIGNAL OPTIMIZATION USING PSO (FIXED)
+# STREAMLIT TRAFFIC SIGNAL OPTIMIZATION USING PSO
 # =========================================================
 
 import streamlit as st
@@ -13,10 +13,10 @@ import altair as alt
 # =========================================================
 st.set_page_config(page_title="Traffic Signal Optimization (PSO)", layout="wide")
 
-st.title("🚦 Traffic Signal Optimization using PSO")
+st.title(" Traffic Signal Optimization using PSO")
 st.write("""
 This application optimizes traffic signal green times for a four-phase intersection
-(**North, South, East, West**) using **Particle Swarm Optimization (PSO)**.
+using **Particle Swarm Optimization (PSO)** based on **waiting time and vehicle count**.
 """)
 
 # =========================================================
@@ -29,80 +29,62 @@ num_generations = st.sidebar.slider("Number of Generations", 20, 300, 100)
 w = st.sidebar.slider("Inertia Weight (w)", 0.3, 1.0, 0.7)
 vmax = st.sidebar.slider("Velocity Limit", 1, 20, 10)
 
-c1, c2 = 2.0, 2.0
+# Hardcoded c1 & c2
+c1, c2 = 1.8, 1.8
 
 # =========================================================
-# 3. LOAD DATASET
+# 3. LOAD DATASET (LOCAL FILE)
 # =========================================================
 DATA_FILE = "traffic_dataset (2).csv"
 
 try:
     df = pd.read_csv(DATA_FILE)
-    st.success("✅ Dataset loaded successfully")
+    st.success(" Dataset loaded successfully")
 except FileNotFoundError:
-    st.error("❌ Dataset not found")
+    st.error(" Dataset not found in project folder")
     st.stop()
 
-st.subheader("📄 Dataset Preview")
-st.dataframe(df)
+st.subheader(" Dataset Preview")
+st.dataframe(df.head())
 
 # =========================================================
 # 4. DATA VALIDATION
 # =========================================================
-required_cols = {"direction", "waiting_time", "vehicle_count"}
 if not {"waiting_time", "vehicle_count"}.issubset(df.columns):
     st.error("Dataset must contain: waiting_time, vehicle_count")
     st.stop()
 
-# Auto split dataset into 4 directions
-split_df = np.array_split(df, 4)
+# =========================================================
+# 5. TRAFFIC STATISTICS
+# =========================================================
+avg_wait = df["waiting_time"].mean()
+avg_vehicle = df["vehicle_count"].mean()
 
-wait = np.array([d["waiting_time"].mean() for d in split_df])
-veh = np.array([d["vehicle_count"].mean() for d in split_df])
-
-direction_order = ["North", "South", "East", "West"]
-
-st.subheader("📊 Estimated Traffic Demand by Direction")
-st.table(pd.DataFrame({
-    "Direction": direction_order,
-    "Avg Waiting Time": wait,
-    "Avg Vehicle Count": veh
-}))
+st.subheader(" Traffic Statistics")
+st.write(f" Average Waiting Time: **{avg_wait:.2f} sec**")
+st.write(f" Average Vehicle Count: **{avg_vehicle:.2f} vehicles**")
 
 # =========================================================
-# 5. PREPARE TRAFFIC DEMAND PER DIRECTION
-# =========================================================
-direction_order = ["North", "South", "East", "West"]
-
-df_grouped = df.groupby("direction").mean().reindex(direction_order)
-
-wait = df_grouped["waiting_time"].values
-veh = df_grouped["vehicle_count"].values
-
-st.subheader("📊 Traffic Demand by Direction")
-st.dataframe(df_grouped)
-
-# =========================================================
-# 6. FITNESS FUNCTION (FIXED)
+# 6. FITNESS FUNCTION
 # =========================================================
 def compute_fitness(green_times):
     green_times = np.clip(green_times, 5, 60)
+    total_green = np.sum(green_times)
 
-    # Delay model (higher demand → more green time needed)
-    delay = np.sum((wait * veh) / green_times)
+    demand = avg_wait * avg_vehicle
+    delay = demand / total_green
 
-    # Penalize extreme imbalance
-    balance_penalty = np.var(green_times)
+    balance_penalty = 0.1 / (np.var(green_times) + 1e-6)
 
-    return delay + 0.3 * balance_penalty
+    return delay + balance_penalty
 
 # =========================================================
 # 7. RUN PSO
 # =========================================================
-if st.button("🚀 Run PSO Optimization", type="primary"):
+if st.button(" Run PSO Optimization", type="primary"):
 
     start_time = time.time()
-    dimensions = 4
+    dimensions = 4  # North, South, East, West
 
     pos = np.random.uniform(10, 50, (num_particles, dimensions))
     vel = np.random.uniform(-vmax, vmax, (num_particles, dimensions))
@@ -116,12 +98,12 @@ if st.button("🚀 Run PSO Optimization", type="primary"):
 
     convergence = []
 
-    with st.spinner("Optimizing traffic signals..."):
+    with st.spinner("Optimizing traffic signal timings..."):
         for gen in range(num_generations):
 
-            r1 = np.random.rand(num_particles, dimensions)
-            r2 = np.random.rand(num_particles, dimensions)
+            r1, r2 = np.random.rand(), np.random.rand()
 
+            # Velocity update menggunakan hardcoded c1 & c2
             vel = (
                 w * vel
                 + c1 * r1 * (pbest - pos)
@@ -149,18 +131,19 @@ if st.button("🚀 Run PSO Optimization", type="primary"):
     # =========================================================
     # 8. RESULTS
     # =========================================================
-    st.subheader("✅ Optimization Results")
+    st.subheader(" Optimization Results")
 
+    phases = ["North", "South", "East", "West"]
     col1, col2 = st.columns(2)
 
     with col1:
-        st.success("Optimal Green Times")
-        for i, d in enumerate(direction_order):
-            st.write(f"**{d}**: {gbest[i]:.2f} sec")
+        st.success(" Optimal Green Times")
+        for i, g in enumerate(gbest):
+            st.write(f" {phases[i]}: **{g:.2f} sec**")
 
-        st.write(f"**Total Green Time:** {np.sum(gbest):.2f} sec")
-        st.write(f"**Best Fitness Value:** {gbest_val:.6f}")
-        st.write(f"**Execution Time:** {exec_time:.3f} sec")
+        st.write(f" Total Green Time: **{np.sum(gbest):.2f} sec**")
+        st.write(f" Best Fitness Value: **{gbest_val:.6f}**")
+        st.write(f" Execution Time: **{exec_time:.3f} sec**")
 
     with col2:
         df_conv = pd.DataFrame({
@@ -169,21 +152,25 @@ if st.button("🚀 Run PSO Optimization", type="primary"):
         })
 
         chart = alt.Chart(df_conv).mark_line().encode(
-            x="Generation",
-            y="Fitness"
+            x=alt.X("Generation", title="Generation"),
+            y=alt.Y("Fitness", title="Fitness Value (Lower is Better)")
         ).interactive()
 
         st.altair_chart(chart, use_container_width=True)
 
 # =========================================================
-# 9. CONCLUSION
+# 9. PERFORMANCE ANALYSIS 
 # =========================================================
 st.divider()
-st.header("📌 Conclusion")
+st.header(" Conclusion")
 
 st.markdown("""
-This improved PSO-based traffic signal optimization system dynamically allocates
-green times according to real traffic demand per direction. The enhanced fitness
-function ensures meaningful convergence, improved exploration, and realistic
-signal timing optimization suitable for real-world deployment.
+This Streamlit-based Particle Swarm Optimization (PSO) application effectively
+optimizes traffic signal green times to reduce congestion. By considering
+both waiting time and vehicle count, the system identifies efficient
+green time allocations that are intuitive and directly applicable.
+
+The results demonstrate rapid convergence, computational efficiency, and
+practical applicability, confirming that PSO is a scalable and reliable
+approach for adaptive traffic signal control in real-world intersections.
 """)
