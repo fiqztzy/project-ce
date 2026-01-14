@@ -50,9 +50,24 @@ st.dataframe(df)
 # 4. DATA VALIDATION
 # =========================================================
 required_cols = {"direction", "waiting_time", "vehicle_count"}
-if not required_cols.issubset(df.columns):
-    st.error("Dataset must contain: direction, waiting_time, vehicle_count")
+if not {"waiting_time", "vehicle_count"}.issubset(df.columns):
+    st.error("Dataset must contain: waiting_time, vehicle_count")
     st.stop()
+
+# Auto split dataset into 4 directions
+split_df = np.array_split(df, 4)
+
+wait = np.array([d["waiting_time"].mean() for d in split_df])
+veh = np.array([d["vehicle_count"].mean() for d in split_df])
+
+direction_order = ["North", "South", "East", "West"]
+
+st.subheader("📊 Estimated Traffic Demand by Direction")
+st.table(pd.DataFrame({
+    "Direction": direction_order,
+    "Avg Waiting Time": wait,
+    "Avg Vehicle Count": veh
+}))
 
 # =========================================================
 # 5. PREPARE TRAFFIC DEMAND PER DIRECTION
